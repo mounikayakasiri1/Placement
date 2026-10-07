@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI College Placement Predictor</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;color:#222}
+.container{width:92%;max-width:850px;margin:auto;padding:22px 0 40px}
+h1{text-align:center;color:#fff;font-size:29px;margin:8px 0}
+.subtitle{text-align:center;color:#fff;margin:8px 0 22px;line-height:1.5}
+.card{background:#fff;padding:22px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 25px #0002}
+h2{margin-top:0;color:#333}
+label{display:block;font-weight:bold;margin:14px 0 6px}
+input,select{width:100%;padding:13px;border:1px solid #ccc;border-radius:9px;font-size:16px}
+button{width:100%;padding:14px;margin-top:20px;border:0;border-radius:9px;background:#536dfe;color:white;font-size:17px;font-weight:bold}
+button:active{transform:scale(.99)}
+.secondary{background:#444}
+.result{display:none}
+.score{width:145px;height:145px;border-radius:50%;background:#536dfe;margin:18px auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:bold}
+li{margin:9px 0;line-height:1.45}
+.badge{display:inline-block;padding:7px 12px;border-radius:20px;background:#eee;font-weight:bold}
+.history-item{border:1px solid #ddd;border-radius:10px;padding:12px;margin:8px 0}
+.small{font-size:13px;color:#666}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🎓 AI College Placement Predictor</h1>
+<p class="subtitle">Check placement readiness, find skill gaps and get a company-specific preparation plan.</p>
+
+<div class="card">
+<h2>Student Details</h2>
+<label>Name *</label>
+<input id="name" placeholder="Enter your name">
+
+<label>Email</label>
+<input id="email" type="email" placeholder="Enter your email">
+
+<label>CGPA *</label>
+<input id="cgpa" type="number" min="0" max="10" step="0.1" placeholder="Example: 8.2">
+
+<label>Coding Skill (%) *</label>
+<input id="coding" type="number" min="0" max="100" placeholder="Example: 75">
+
+<label>Communication Skill (%) *</label>
+<input id="communication" type="number" min="0" max="100" placeholder="Example: 70">
+
+<label>Aptitude Skill (%) *</label>
+<input id="aptitude" type="number" min="0" max="100" placeholder="Example: 65">
+
+<label>Projects (%) *</label>
+<input id="projects" type="number" min="0" max="100" placeholder="Example: 80">
+
+<label>Target Company *</label>
+<select id="company">
+<option>General</option>
+<option>TCS</option>
+<option>Infosys</option>
+<option>Wipro</option>
+<option>Amazon</option>
+<option>Google</option>
+</select>
+
+<button onclick="predict()">Predict Placement Readiness</button>
+</div>
+
+<div class="card result" id="result">
+<h2>📊 Placement Result</h2>
+<div class="score" id="score">0%</div>
+<p style="text-align:center"><span class="badge" id="level"></span></p>
+<p><b>Target Company:</b> <span id="target"></span></p>
+
+<h3>🎯 Skill Gaps</h3>
+<ul id="gaps"></ul>
+
+<h3>📚 Recommended Learning Path</h3>
+<ul id="recommendations"></ul>
+
+<h3>💼 Interview Preparation</h3>
+<ul id="interview"></ul>
+
+<p id="saved" class="small"></p>
+</div>
+
+<div class="card">
+<h2>💾 Saved Results</h2>
+<p class="small">Results are stored on this phone/browser using local storage.</p>
+<div id="history"></div>
+<button class="secondary" onclick="clearHistory()">Clear Saved Results</button>
+</div>
+</div>
+
+<script>
+const plans={
+TCS:["Practice aptitude and logical reasoning","Prepare basic programming questions","Revise OOP concepts","Practice HR interview questions"],
+Infosys:["Practice aptitude","Practice Python/Java programming","Revise DBMS and SQL","Practice communication"],
+Wipro:["Practice coding problems","Revise OOP concepts","Practice SQL and DBMS","Prepare HR questions"],
+Amazon:["Practice Data Structures and Algorithms","Practice problem solving","Revise OOP and DBMS","Practice technical interviews"],
+Google:["Master Data Structures and Algorithms","Practice advanced coding problems","Improve problem-solving skills","Practice technical interviews"],
+General:["Practice aptitude","Practice coding","Revise core subjects","Practice HR and technical interviews"]
+};
+
+function val(id){return document.getElementById(id).value}
+
+function predict(){
+let name=val("name").trim()||"Student";
+let email=val("email").trim();
+let cgpa=parseFloat(val("cgpa"));
+let coding=parseInt(val("coding"));
+let communication=parseInt(val("communication"));
+let aptitude=parseInt(val("aptitude"));
+let projects=parseInt(val("projects"));
+let company=val("company");
+
+if(isNaN(cgpa)||isNaN(coding)||isNaN(communication)||isNaN(aptitude)||isNaN(projects)){
+alert("Please enter all required details.");
+return;
+}
+if(cgpa<0||cgpa>10||[coding,communication,aptitude,projects].some(x=>x<0||x>100)){
+alert("Please enter valid values.");
+return;
+}
+
+let readiness=Math.round(((cgpa/10)*100*.20+coding*.30+communication*.15+aptitude*.15+projects*.20)*100)/100;
+let level=readiness>=80?"Excellent":readiness>=65?"Good":readiness>=50?"Needs Improvement":"Not Ready";
+
+let gaps=[];
+let rec=[];
+if(coding<60){gaps.push("Coding / Data Structures");rec.push("Practice Java/Python, Data Structures and Algorithms.");}
+if(communication<60){gaps.push("Communication");rec.push("Practice communication, HR questions and mock interviews.");}
+if(aptitude<60){gaps.push("Aptitude");rec.push("Practice quantitative aptitude, logical reasoning and verbal ability.");}
+if(projects<60){gaps.push("Projects");rec.push("Build 2-3 real-world projects and upload them to GitHub.");}
+if(cgpa<7){gaps.push("Academic Performance");rec.push("Improve academic performance and maintain a good CGPA.");}
+
+if(gaps.length===0)gaps.push("No major skill gaps found 🎉");
+if(rec.length===0)rec.push("Continue practicing and take regular mock interviews.");
+
+let result={id:Date.now(),name,email,cgpa,coding,communication,aptitude,projects,company,readiness,level,gaps,rec,interview:plans[company],date:new Date().toLocaleString()};
+let history=JSON.parse(localStorage.getItem("placementResults")||"[]");
+history.unshift(result);
+localStorage.setItem("placementResults",JSON.stringify(history));
+
+document.getElementById("result").style.display="block";
+document.getElementById("score").textContent=readiness+"%";
+document.getElementById("level").textContent=level;
+document.getElementById("target").textContent=company;
+document.getElementById("gaps").innerHTML=gaps.map(x=>"<li>"+x+"</li>").join("");
+document.getElementById("recommendations").innerHTML=rec.map(x=>"<li>"+x+"</li>").join("");
+document.getElementById("interview").innerHTML=plans[company].map(x=>"<li>"+x+"</li>").join("");
+document.getElementById("saved").textContent="✅ Result saved on this phone/browser.";
+showHistory();
+document.getElementById("result").scrollIntoView({behavior:"smooth"});
+}
+
+function showHistory(){
+let history=JSON.parse(localStorage.getItem("placementResults")||"[]");
+let box=document.getElementById("history");
+if(!history.length){box.innerHTML="<p class='small'>No saved results yet.</p>";return;}
+box.innerHTML=history.slice(0,10).map((r,i)=>`
+<div class="history-item">
+<b>${r.name}</b> — ${r.company}<br>
+Readiness: <b>${r.readiness}%</b> (${r.level})<br>
+<span class="small">${r.date}</span>
+</div>`).join("");
+}
+function clearHistory(){
+if(confirm("Delete all saved results from this browser?")){
+localStorage.removeItem("placementResults");
+showHistory();
+}
+}
+showHistory();
+</script>
+</body>
+</html>
